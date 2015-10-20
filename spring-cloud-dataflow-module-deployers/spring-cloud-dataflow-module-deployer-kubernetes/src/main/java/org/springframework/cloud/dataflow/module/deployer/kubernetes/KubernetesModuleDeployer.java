@@ -24,7 +24,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
  * @author Florian Rosenberg
  */
 public class KubernetesModuleDeployer implements ModuleDeployer {
-
+	
 	protected static final String SCSM_GROUP_KEY = "scsm-group";
 	protected static final String SCSM_LABEL_KEY = "scsm-label";
 	private static final String SCSM_EXTENSION = "scsm-extension";
@@ -36,9 +36,12 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 	private static final String PORT_KEY = "port";
 	private static final String SERVER_PORT_KEY = "server.port";
 	private static final String HEALTH_ENDPOINT = "/health";
-	private static final String SPRING_REDIS_HOST = "SPRING_REDIS_HOST";
 	private static final String CONTAINER_NAME = "spring-module-launcher";
 	
+	private static final String SPRING_REDIS_HOST = "SPRING_REDIS_HOST";
+	private static final String SPRING_REDIS_SENTINEL_NODES = "SPRING_REDIS_SENTINEL_NODES";
+	private static final String SPRING_REDIS_SENTINEL_MASTER = "SPRING_REDIS_SENTINEL_MASTER";
+		
 	/** 
 	 * Use the default spring image. Override with --kubernetes.moduleLauncherImage 
 	 * as a Spring Admin parameter to use a different one.
@@ -258,6 +261,8 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		// Pass on the same REDIS host configuration that the Spring Admin uses to each Kubernetes
 		// RC/POD that it creates. This may be a limitation in case we want different redis per 
 		// customer. We could move this to module deployment properties if needed.
+		
+		// Standard Redis config
 		String redisHost = System.getenv(SPRING_REDIS_HOST);
 		if (redisHost != null) {
 			envVars.add(new EnvVarBuilder()
@@ -265,7 +270,23 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 					.withValue(redisHost)
 					.build());
 		}		
-		return envVars;		
+
+		// Redis sentinel config
+		String redisSentinelMaster = System.getenv(SPRING_REDIS_SENTINEL_MASTER);
+		String redisSentinelHost = System.getenv(SPRING_REDIS_SENTINEL_NODES);
+		if (redisSentinelMaster != null) {
+			envVars.add(new EnvVarBuilder()
+					.withName(SPRING_REDIS_SENTINEL_MASTER)
+					.withValue(redisSentinelMaster)
+					.build());
+		}
+		if (redisSentinelHost != null) {
+			envVars.add(new EnvVarBuilder()
+					.withName(SPRING_REDIS_SENTINEL_NODES)
+					.withValue(redisSentinelHost)
+					.build());
+		}
+		return envVars;
 	}	
 	
 	private ModuleStatus buildModuleStatus(ModuleDeploymentId id, PodList list) {
