@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 
 /**
  * Spring Bean configuration for the {@link KubernetesModuleDeployer}.
- * 
  * @author Florian Rosenberg
  */
 @Configuration
@@ -25,15 +24,22 @@ public class KubernetesModuleDeployerConfiguration {
 	public ModuleDeployer processModuleDeployer() {
 		return new KubernetesModuleDeployer(properties);
 	}
-	
+
 	@Bean
 	public ModuleDeployer taskModuleDeployer() {
 		return processModuleDeployer();
 	}
-	
+
 	@Bean
-	public KubernetesClient kubeClient() {
+	public KubernetesClient kubernetesClient() {
 		return new DefaultKubernetesClient();
 	}
-}
 
+	@Bean
+	public ContainerFactory containerFactory() {
+		if (properties.usePreBakedImagePerModule()) {
+			return new PreBuiltDockerImageContainerFactory();
+		}
+		return new DefaultContainerFactory();
+	}
+}

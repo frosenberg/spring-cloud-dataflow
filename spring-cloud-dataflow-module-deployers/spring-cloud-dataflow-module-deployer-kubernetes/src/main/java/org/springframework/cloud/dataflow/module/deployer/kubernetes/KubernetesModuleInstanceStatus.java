@@ -12,24 +12,23 @@ import io.fabric8.kubernetes.api.model.Pod;
 
 /**
  * Represents the status of a module.
- *  
  * @author Florian Rosenberg
  */
 public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 
 	private final Pod pod;
 	private final String moduleId;
-	private ContainerStatus container;
-	
+	private ContainerStatus containerStatus;
+
 	public KubernetesModuleInstanceStatus(String moduleId, Pod pod) {
 		this.moduleId = moduleId;
 		this.pod = pod;
 		// we assume one container per pod
 		if (pod != null && pod.getStatus().getContainerStatuses().size() == 1) {
-			this.container = pod.getStatus().getContainerStatuses().get(0);
+			this.containerStatus = pod.getStatus().getContainerStatuses().get(0);
 		} else {
-			this.container = null;
-		}	
+			this.containerStatus = null;
+		}
 	}
 
 	@Override
@@ -39,7 +38,7 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 
 	@Override
 	public ModuleStatus.State getState() {
-		return pod != null && container != null ? mapState() :  ModuleStatus.State.unknown;
+		return pod != null && containerStatus != null ? mapState() : ModuleStatus.State.unknown;
 	}
 
 	// Maps Kubernetes phases onto Spring Cloud Dataflow states
@@ -51,14 +50,14 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 				return ModuleStatus.State.deploying;
 				
 			// We only report a module as running if the container is also ready to service requests.
-		    // We also implemente the Readiness check as part of the container to ensure ready means 
+		    // We also implement the Readiness check as part of the container to ensure ready means 
 			// that the module is up and running and not only that the JVM has been created and the
 			// Spring module is still starting up
 			case "Running":
 				// we assume we only have one container
-				if (pod.getStatus().getContainerStatuses().get(0).getReady())
+				if (containerStatus.getReady())
 					return ModuleStatus.State.deployed;
-				else 
+				else
 					return ModuleStatus.State.deploying;
 
 			case "Succeeded":
@@ -67,11 +66,12 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 			case "Failed":
 				return ModuleStatus.State.failed;
 
-			case "Unknown":								
+			case "Unknown":		
+				return ModuleStatus.State.unknown;			
+
 			default: 
 				return ModuleStatus.State.unknown;			
 		}
-		
 	}
 
 	@Override
@@ -81,10 +81,9 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 		result.put("pod_starttime", pod.getStatus().getStartTime());
 		result.put("pod_ip", pod.getStatus().getPodIP());
 		result.put("host_ip", pod.getStatus().getHostIP());
-		result.put("container_restart_count", ""+ container.getRestartCount());
-		
+		result.put("container_restart_count", ""+ containerStatus.getRestartCount());
+
 		// TODO add more useful stuff
-		
 		return result;
 	}
 }

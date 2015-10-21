@@ -1,9 +1,9 @@
 SPI implementation for deploying Spring Cloud Stream modules to [Kubernetes](http://http://kubernetes.io/).
 
-### Setup a Kubernetes Cluster 
+### Setup a Kubernetes Cluster
 
 If you don't have access to a Kubernetes Cluster, you can deploy one locally.
-This requires a local functional Docker installation and the usage of some 
+This requires a local functional Docker installation and the usage of some
 nice scripts to setup [Kubernetes](https://github.com/olmoser/docker-compose-kubernetes).
 
 In a nutshell, do the following steps:
@@ -16,11 +16,11 @@ $ eval "$(docker-machine env sc-dataflow-dev)"
 $ ./kube-up.sh
 ```
 
-Once the cluster is up, configure you local system to your local DNS server `10.0.0.10` 
+Once the cluster is up, configure you local system to your local DNS server `10.0.0.10`
 as the main resolver. On Mac, you can create a network profile for easy switching.
 
 After installing a cluster, install the `kubectl` binary and ensure you have proper access to the
-cluster. 
+cluster.
 
 
 ### Run the Kubernetes Deployer
@@ -41,19 +41,20 @@ cluster.
    $ kubectl create -f src/main/kubernetes/redis-service.yml
    ```
    
+   Try to connect as well: 
+
    You should now be able to resolve your Redis instance running in Kubernetes.
    ```
-   $ nslookup redis.default.svc.cluster.local 
+   $ nslookup redis.default.svc.cluster.local
    ```
-   
-   Try to connect as well: 
+
+   Try to connect as well:
    ```
    $ redis-cli -h redis.default.svc.cluster.local
    $ redis.default.svc.cluster.local:6379> keys *
 		 (empty list or set)
    ```
   
-
 1. Run integration tests (optional)
 
 	 ```
@@ -101,7 +102,7 @@ cluster.
    ```
    $ curl -v -XPOST -H"Content-Type: text/plain" http://deployment1-http.default.svc.cluster.local:9999/messages -d "foobar123"
    ```
-   
+
    Check the log output:
    ```
 	 $ kubectl get pods -l scsm-label=log
@@ -113,15 +114,12 @@ cluster.
    
    The last line should say "foobar123". This means the stream is working correctly.
    
-	
-	 Also you check the status via Kubernetes `kubectl`:
+	Also you check the status via Kubernetes `kubectl`:
 	 ```
 	 $ kubectl get service,rc,pods
 	 ```
-	 
+
 	 You will see a bunch of new resources being deployed.
-	 
-	 
 
 
 ### Configuration settings
@@ -133,14 +131,14 @@ If you have a working `kubectl` installation that points to an exsting Kubernete
 If you want to use your own base image you can set the following arguments when starting the Spring Admin:
 
 ```
---kubernetes.imagePullSecret=mysecret 
+--kubernetes.imagePullSecret=mysecret
 --kubernetes.moduleLauncherImage=myorg/mycustom-module-launcher-image
 ```
 
 The default image is: [https://hub.docker.com/r/springcloud/stream-module-launcher/](springcloud/stream-module-launcher).
 
 
-##### TL;DR 
+##### TL;DR
 
 It will use settings from different sources in the following order of priority:
 
@@ -171,6 +169,3 @@ System properties are preferred over environment variables. The following system
 * `kubernetes.auth.token` / `KUBERNETES_AUTH_TOKEN`
 * `kubernetes.watch.reconnectInterval` / `KUBERNETES_WATCH_RECONNECTINTERVAL`
 * `kubernetes.watch.reconnectLimit` / `KUBERNETES_WATCH_RECONNECTLIMIT`
-
-
- 

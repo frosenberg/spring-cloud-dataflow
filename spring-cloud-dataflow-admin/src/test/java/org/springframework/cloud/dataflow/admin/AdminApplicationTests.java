@@ -70,7 +70,7 @@ public class AdminApplicationTests {
 	public void testKubernetesProfile() {
 		SpringApplication app = new SpringApplication(AdminApplication.class);
 		ConfigurableApplicationContext context = app.run(new String[] { "--spring.profiles.active=kubernetes",
-				"--server.port=0" });
+				"--server.port=-1" });
 		assertThat(context.containsBean("processModuleDeployer"), is(true));
 		assertThat(context.getBean("processModuleDeployer"), instanceOf(KubernetesModuleDeployer.class));
 		context.close();
