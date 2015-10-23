@@ -32,10 +32,11 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 	private static final String SCSM_GROUP_ID = "scsm-groupId";
 	private static final String SCSM_ARTIFACT_ID = "scsm-artifactId";
 	private static final String SPRING_MARKER_VALUE = "scsm-module";
+	private static final String SCSM_CLASSIFIER = "scsm-classifier";
 	private static final String SPRING_MARKER_KEY = "role";
 	private static final String PORT_KEY = "port";
 	private static final String SERVER_PORT_KEY = "server.port";
-
+	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
@@ -75,9 +76,11 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		String name = createKubernetesName(id);
 		logger.debug("Undeploying module: {}", name);
 
+		Map<String, String> idMap = createIdMap(id);
 		try {
-			kubernetesClient.replicationControllers().withName(name).delete();
-			kubernetesClient.services().withName(name).delete();
+			kubernetesClient.services().withLabels(idMap).delete();
+			kubernetesClient.replicationControllers().withLabels(idMap).delete();
+			kubernetesClient.pods().withLabels(idMap).delete();
 		} catch (KubernetesClientException e) {
 			logger.error(e.getMessage(), e);
 			throw new RuntimeException(e);
@@ -121,30 +124,34 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		return result;		
 	}
 
-	private ReplicationController createReplicationController(ModuleDeploymentId id, ModuleDeploymentRequest request, int externalPort) {
-        ReplicationController rc = new ReplicationControllerBuilder()
-            .withNewMetadata()
-            	.withName(createKubernetesName(id))  // does not allow . in the name
-            	.withLabels(createIdMap(id))
-            	.addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
-        		.addToLabels(SCSM_ARTIFACT_ID, request.getCoordinates().getArtifactId())
-        		.addToLabels(SCSM_GROUP_ID, request.getCoordinates().getGroupId())
-        		.addToLabels(SCSM_VERSION, request.getCoordinates().getVersion())
-        		.addToLabels(SCSM_EXTENSION, request.getCoordinates().getExtension())
-            .endMetadata()
-            .withNewSpec()
-            	.withReplicas(request.getCount())
-            	.withSelector(createIdMap(id))
-            .withNewTemplate()
-            	.withNewMetadata()
-            		.withLabels(createIdMap(id))
-                	.addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
-            	.endMetadata()
-                .withSpec(createPodSpec(request, externalPort))	                	
-            .endTemplate()
-            .endSpec().build();        
-       
-        return kubernetesClient.replicationControllers().create(rc);        
+	private ReplicationController createReplicationController(
+			ModuleDeploymentId id, ModuleDeploymentRequest request,
+			int externalPort) {
+		ReplicationController rc = new ReplicationControllerBuilder()
+			.withNewMetadata()
+				.withName(createKubernetesName(id)) // does not allow . in the name
+				.withLabels(createIdMap(id))
+					.addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
+					.addToLabels(SCSM_ARTIFACT_ID, request.getCoordinates().getArtifactId())
+					.addToLabels(SCSM_GROUP_ID, request.getCoordinates().getGroupId())
+					.addToLabels(SCSM_VERSION, request.getCoordinates().getVersion())
+					.addToLabels(SCSM_EXTENSION, request.getCoordinates().getExtension())
+					.addToLabels(SCSM_CLASSIFIER, request.getCoordinates().getClassifier())
+			.endMetadata()
+			.withNewSpec()
+				.withReplicas(request.getCount())
+				.withSelector(createIdMap(id))
+				.withNewTemplate()
+					.withNewMetadata()
+						.withLabels(createIdMap(id))
+						.addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
+					.endMetadata()
+					.withSpec(createPodSpec(request, externalPort))
+				.endTemplate()
+			.endSpec()
+			.build();
+
+		return kubernetesClient.replicationControllers().create(rc);
 	}
 	
 	private PodSpec createPodSpec(ModuleDeploymentRequest request, int port) {
@@ -154,24 +161,32 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		if (properties.getImagePullSecret() != null) {
 			podSpec.addNewImagePullSecret(properties.getImagePullSecret());
 		}
-		podSpec.addToContainers(containerFactory.create(request, port));
+		
+		Container container = containerFactory.create(request, port);
+		
+		// add memory and cpu resource limits
+		ResourceRequirements req = new ResourceRequirements();
+		req.setLimits(deduceResourceLimits(request));
+		container.setResources(req);
+		
+		podSpec.addToContainers(container);
 		return podSpec.build();
 	}
 
 	private void createService(ModuleDeploymentId id, ModuleDeploymentRequest request, int externalPort) {
 		kubernetesClient.services().inNamespace(kubernetesClient.getNamespace()).createNew()
 			.withNewMetadata()
-              .withName(KubernetesUtils.createKubernetesName(id)) // does not allow . in the name
-              .withLabels(createIdMap(id))
-              .addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
-            .endMetadata()
-            .withNewSpec()
-            	.withSelector(createIdMap(id))
-            	.addNewPort()                	
-            		.withPort(externalPort)
-            	.endPort()
-            .endSpec()
-            .done();			
+				.withName(KubernetesUtils.createKubernetesName(id)) // does not allow . in the name
+				.withLabels(createIdMap(id))
+				.addToLabels(SPRING_MARKER_KEY, SPRING_MARKER_VALUE)
+			.endMetadata()
+			.withNewSpec()
+				.withSelector(createIdMap(id))
+				.addNewPort()                	
+					.withPort(externalPort)
+				.endPort()
+			.endSpec()
+			.done();			
 	}
 
 	/**
@@ -199,4 +214,21 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		}
 		return statusBuilder.build();
 	}
+	
+	private Map<String, Quantity> deduceResourceLimits(ModuleDeploymentRequest request) {
+		String memOverride = request.getDeploymentProperties().get("kubernetes.memory");
+		if (memOverride == null)
+			memOverride = properties.getMemory();
+
+		String cpuOverride = request.getDeploymentProperties().get("kubernetes.cpu");
+		if (cpuOverride == null)
+			cpuOverride = properties.getCpu();
+		
+
+		Map<String,Quantity> limits = new HashMap<String,Quantity>();
+		limits.put("memory", new Quantity(memOverride));
+		limits.put("cpu", new Quantity(cpuOverride));		
+		return limits;
+	}
+
 }

@@ -21,6 +21,8 @@ import io.fabric8.kubernetes.api.model.*;
  */
 public class DefaultContainerFactory implements ContainerFactory {
 
+	private static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS";
+
 	private static final String HEALTH_ENDPOINT = "/health";
 	
 	private static final String SPRING_REDIS_HOST = "SPRING_REDIS_HOST";
@@ -33,23 +35,23 @@ public class DefaultContainerFactory implements ContainerFactory {
 	@Override
 	public Container create(ModuleDeploymentRequest request, int port) {
 		ContainerBuilder container = new ContainerBuilder();
-			
-		ModuleDeploymentId id = ModuleDeploymentId.fromModuleDefinition(request.getDefinition());
-		
+
+		ModuleDeploymentId id = ModuleDeploymentId
+				.fromModuleDefinition(request.getDefinition());
+
 		container.withName(KubernetesUtils.createKubernetesName(id))
-			.withImage(deduceImageName(request))
-	     	.withEnv(createModuleLauncherEnvArgs(request))
-	     	.withArgs(createCommandArgs(request))
-	     	.addNewPort()
-	     		.withContainerPort(port)
-	     	.endPort()
-	     	.withReadinessProbe(createProbe(port, 
-	     		properties.getReadinessProbeTimeout(), 
-	     		properties.getReadinessProbeDelay()))
-		 	.withLivenessProbe(createProbe(port, 
-		 		properties.getLivenessProbeTimeout(), 
-		 		properties.getLivenessProbeDelay()));
-	
+				.withImage(deduceImageName(request))
+				.withEnv(createModuleLauncherEnvArgs(request))
+				.withArgs(createCommandArgs(request))
+				.addNewPort()
+					.withContainerPort(port)
+				.endPort()
+				.withReadinessProbe(
+						createProbe(port, properties.getReadinessProbeTimeout(),
+								properties.getReadinessProbeDelay()))
+				.withLivenessProbe(
+						createProbe(port, properties.getLivenessProbeTimeout(),
+								properties.getLivenessProbeDelay()));
 		return container.build();
 	}
 	
@@ -126,6 +128,16 @@ public class DefaultContainerFactory implements ContainerFactory {
 					.withValue(redisSentinelHost)
 					.build());
 		}
+		
+		// add java opts for the module java process
+		String javaOpts = request.getDeploymentProperties().get(JAVA_TOOL_OPTIONS.toLowerCase());
+		if (javaOpts != null) {
+			envVars.add(new EnvVarBuilder()
+					.withName(JAVA_TOOL_OPTIONS)
+					.withValue(javaOpts)
+					.build());
+		}
+		
 		return envVars;
 	}	
 

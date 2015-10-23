@@ -50,7 +50,7 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 				return ModuleStatus.State.deploying;
 				
 			// We only report a module as running if the container is also ready to service requests.
-		    // We also implement the Readiness check as part of the container to ensure ready means 
+			// We also implement the Readiness check as part of the container to ensure ready means 
 			// that the module is up and running and not only that the JVM has been created and the
 			// Spring module is still starting up
 			case "Running":

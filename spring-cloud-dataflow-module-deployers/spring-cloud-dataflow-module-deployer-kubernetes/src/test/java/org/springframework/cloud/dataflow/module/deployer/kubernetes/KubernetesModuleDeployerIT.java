@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.cloud.dataflow.core.ModuleCoordinates;
+import org.springframework.cloud.dataflow.core.ArtifactCoordinates;
 import org.springframework.cloud.dataflow.core.ModuleDefinition;
 import org.springframework.cloud.dataflow.core.ModuleDeploymentId;
 import org.springframework.cloud.dataflow.core.ModuleDeploymentRequest;
@@ -57,7 +57,7 @@ public class KubernetesModuleDeployerIT {
 				.setParameter("server.port", "9999")
 				.build();
 
-		ModuleCoordinates c = new ModuleCoordinates.Builder()
+		ArtifactCoordinates c = new ArtifactCoordinates.Builder()
 				.setGroupId("org.springframework.cloud.stream.module")
 				.setArtifactId("http-source")
 				.setExtension("jar")

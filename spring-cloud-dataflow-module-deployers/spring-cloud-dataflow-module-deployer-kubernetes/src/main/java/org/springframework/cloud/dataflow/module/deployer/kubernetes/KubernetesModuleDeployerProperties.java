@@ -94,6 +94,16 @@ class KubernetesModuleDeployerProperties {
 	 * {@link http://kubernetes.io/v1.0/docs/user-guide/production-pods.html#liveness-and-readiness-probes-aka-health-checks}
 	 */
 	private int readinessProbeTimeout = 2;
+
+	/**
+	 * Memory to allocate for a Pod
+	 */
+	private String memory = "512Mi";
+
+	/**
+	 * CPU to allocate for a Pod (quarter of a CPU).
+	 */
+	private String cpu = "250m";
 	
 
 	public String getModuleLauncherImage() {
@@ -166,6 +176,22 @@ class KubernetesModuleDeployerProperties {
 
 	public void setImageRepository(String imageRepository) {
 		this.imageRepository = imageRepository;
+	}
+
+	public String getMemory() {
+		return memory;
+	}
+
+	public void setMemory(String memory) {
+		this.memory = memory;
+	}
+
+	public String getCpu() {
+		return cpu;
+	}
+
+	public void setCpu(String cpu) {
+		this.cpu = cpu;
 	}
 
 }
