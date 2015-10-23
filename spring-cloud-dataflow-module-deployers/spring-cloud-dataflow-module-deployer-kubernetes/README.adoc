@@ -16,11 +16,12 @@ $ eval "$(docker-machine env sc-dataflow-dev)"
 $ ./kube-up.sh
 ```
 
-Once the cluster is up, configure you local system to your local DNS server `10.0.0.10`
-as the main resolver. On Mac, you can create a network profile for easy switching.
+Once the cluster is up, you need to add the Kubernetes cluster DNS server
+with the IP `10.0.0.10` to your local machine DNS configuration (Note:
+On Mac, you can create a network profile for easy switching.)
 
-After installing a cluster, install the `kubectl` binary and ensure you have proper access to the
-cluster.
+After installing a cluster, install the `kubectl` binary and ensure you have 
+proper access to the cluster.
 
 
 ### Run the Kubernetes Deployer
