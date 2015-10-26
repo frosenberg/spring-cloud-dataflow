@@ -37,6 +37,9 @@ public class KubernetesModuleDeployerConfiguration {
 
 	@Bean
 	public ContainerFactory containerFactory() {
+		if (properties.isUsePreBakedImagePerModule()) {
+			return new PreBuiltDockerImageContainerFactory();
+		}
 		return new DefaultContainerFactory();
 	}
 }

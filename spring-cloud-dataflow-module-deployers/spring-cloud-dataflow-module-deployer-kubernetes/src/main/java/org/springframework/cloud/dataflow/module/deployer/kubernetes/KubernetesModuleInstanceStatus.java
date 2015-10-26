@@ -33,7 +33,11 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 
 	@Override
 	public String getId() {
-		return String.format("%s:%s", moduleId, pod.getMetadata().getName());
+		if (pod != null && pod.getMetadata() != null)
+			return String.format("%s:%s", moduleId, pod.getMetadata().getName());
+		
+		// TODO test this more
+		return String.format("%s:%s", moduleId, "N/A");		
 	}
 
 	@Override
