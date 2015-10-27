@@ -27,9 +27,9 @@ import org.springframework.context.annotation.Profile;
  *
  * @author Florian Rosenberg
  */
+@Profile("kubernetes")
 @Configuration
 @Import(KubernetesModuleDeployerConfiguration.class)
-@Profile("kubernetes")
 class KubernetesConfiguration {
 
 }

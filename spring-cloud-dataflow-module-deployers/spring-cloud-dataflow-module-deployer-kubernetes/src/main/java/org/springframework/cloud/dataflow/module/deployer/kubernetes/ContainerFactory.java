@@ -10,7 +10,7 @@ import io.fabric8.kubernetes.api.model.Container;
  * @author Florian Rosenberg
  */
 public interface ContainerFactory {
-	
+
 	Container create(ModuleDeploymentRequest request, int externalPort);
 
 }

@@ -24,7 +24,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
  * @author Florian Rosenberg
  */
 public class KubernetesModuleDeployer implements ModuleDeployer {
-	
+
 	protected static final String SCSM_GROUP_KEY = "scsm-group";
 	protected static final String SCSM_LABEL_KEY = "scsm-label";
 	private static final String SCSM_EXTENSION = "scsm-extension";
@@ -36,12 +36,12 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 	private static final String SPRING_MARKER_KEY = "role";
 	private static final String PORT_KEY = "port";
 	private static final String SERVER_PORT_KEY = "server.port";
-	
+
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	private KubernetesClient kubernetesClient;
-	
+
 	@Autowired
 	private ContainerFactory containerFactory;
 	
@@ -52,6 +52,11 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		this.properties = properties;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.cloud.dataflow.module.deployer.ModuleDeployer#deploy(org.springframework.cloud.dataflow.core.ModuleDeploymentRequest)
+	 */
+	@Override
 	public ModuleDeploymentId deploy(ModuleDeploymentRequest request) {
 		ModuleDeploymentId id = ModuleDeploymentId.fromModuleDefinition(request.getDefinition());
 
@@ -71,6 +76,10 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		return id;	
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.cloud.dataflow.module.deployer.ModuleDeployer#undeploy(org.springframework.cloud.dataflow.core.ModuleDeploymentId)
+	 */
 	@Override
 	public void undeploy(ModuleDeploymentId id) {
 		String name = createKubernetesName(id);
@@ -87,6 +96,10 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.cloud.dataflow.module.deployer.ModuleDeployer#status(org.springframework.cloud.dataflow.core.ModuleDeploymentId)
+	 */
 	@Override
 	public ModuleStatus status(ModuleDeploymentId id) {
 		String name = createKubernetesName(id);
@@ -104,6 +117,10 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		}
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.cloud.dataflow.module.deployer.ModuleDeployer#status()
+	 */
 	@Override
 	public Map<ModuleDeploymentId, ModuleStatus> status() {
 		Map<ModuleDeploymentId, ModuleStatus> result = new HashMap<>();
@@ -118,7 +135,7 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 			String label = labels.get(SCSM_LABEL_KEY);			
 			ModuleDeploymentId id = new ModuleDeploymentId(group, label);
 			
-			PodList pods = kubernetesClient.pods().withLabels(labels).list();			
+			PodList pods = kubernetesClient.pods().withLabels(labels).list();
 			result.put(id, buildModuleStatus(id, pods));	
 		}		
 		return result;		
@@ -161,14 +178,14 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		if (properties.getImagePullSecret() != null) {
 			podSpec.addNewImagePullSecret(properties.getImagePullSecret());
 		}
-		
+
 		Container container = containerFactory.create(request, port);
-		
+
 		// add memory and cpu resource limits
 		ResourceRequirements req = new ResourceRequirements();
 		req.setLimits(deduceResourceLimits(request));
 		container.setResources(req);
-		
+
 		podSpec.addToContainers(container);
 		return podSpec.build();
 	}
@@ -182,11 +199,11 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 			.endMetadata()
 			.withNewSpec()
 				.withSelector(createIdMap(id))
-				.addNewPort()                	
+				.addNewPort()
 					.withPort(externalPort)
 				.endPort()
 			.endSpec()
-			.done();			
+			.done();
 	}
 
 	/**
@@ -223,11 +240,11 @@ public class KubernetesModuleDeployer implements ModuleDeployer {
 		String cpuOverride = request.getDeploymentProperties().get("kubernetes.cpu");
 		if (cpuOverride == null)
 			cpuOverride = properties.getCpu();
-		
 
 		Map<String,Quantity> limits = new HashMap<String,Quantity>();
 		limits.put("memory", new Quantity(memOverride));
 		limits.put("cpu", new Quantity(cpuOverride));		
+
 		return limits;
 	}
 

@@ -72,7 +72,7 @@ public class KubernetesModuleDeployerIT {
 		ModuleStatus status = processModuleDeployer.status(id);
 		assertNotNull(status);
 		assertSame(id, status.getModuleDeploymentId());
-				
+
 		// wait for "deploying" state. 
 		final Future<ModuleStatus.State> future = executor.submit(new Callable<ModuleStatus.State>() {
 		    @Override

@@ -71,10 +71,10 @@ public class KubernetesModuleInstanceStatus implements ModuleInstanceStatus {
 				return ModuleStatus.State.failed;
 
 			case "Unknown":		
-				return ModuleStatus.State.unknown;			
+				return ModuleStatus.State.unknown;
 
 			default: 
-				return ModuleStatus.State.unknown;			
+				return ModuleStatus.State.unknown;
 		}
 	}
 

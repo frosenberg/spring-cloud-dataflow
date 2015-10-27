@@ -54,15 +54,16 @@ public class DefaultContainerFactory implements ContainerFactory {
 								properties.getLivenessProbeDelay()));
 		return container.build();
 	}
-	
+
 	protected String deduceImageName(ModuleDeploymentRequest request) {
 		return properties.getModuleLauncherImage();
 	}
-	
+
 	protected String bashEscape(String original) {
 		// Adapted from http://ruby-doc.org/stdlib-1.9.3/libdoc/shellwords/rdoc/Shellwords.html#method-c-shellescape
 		return original.replaceAll("([^A-Za-z0-9_\\-.,:\\/@\\n])", "\\\\$1").replaceAll("\n", "'\\\\n'");
 	}
+	
 	/**
 	 * Create a readiness probe for the /health endpoint exposed by each module.
 	 */
@@ -73,7 +74,7 @@ public class DefaultContainerFactory implements ContainerFactory {
 					.withPath(HEALTH_ENDPOINT)
 					.withNewPort(externalPort)
 					.build()
-			)		
+			)
 			.withTimeoutSeconds(timeout)
 			.withInitialDelaySeconds(initialDelay)
 			.build();
@@ -94,16 +95,17 @@ public class DefaultContainerFactory implements ContainerFactory {
 		return cmdArgs;	
 	}
 	
+
 	/**
 	 * TODO change this to a cloud connector approach
 	 */
 	protected List<EnvVar> createModuleLauncherEnvArgs(ModuleDeploymentRequest request) {
 		List<EnvVar> envVars = new LinkedList<EnvVar>();		
-		
+
 		// Pass on the same REDIS host configuration that the Spring Admin uses to each Kubernetes
-		// RC/POD that it creates. This may be a limitation in case we want different redis per 
+		// RC/POD that it creates. This may be a limitation in case we want different redis per
 		// customer. We could move this to module deployment properties if needed.
-		
+
 		// Standard Redis config
 		String redisHost = System.getenv(SPRING_REDIS_HOST);
 		if (redisHost != null) {
@@ -128,7 +130,7 @@ public class DefaultContainerFactory implements ContainerFactory {
 					.withValue(redisSentinelHost)
 					.build());
 		}
-		
+
 		// add java opts for the module java process
 		String javaOpts = request.getDeploymentProperties().get(JAVA_TOOL_OPTIONS.toLowerCase());
 		if (javaOpts != null) {
@@ -139,6 +141,6 @@ public class DefaultContainerFactory implements ContainerFactory {
 		}
 		
 		return envVars;
-	}	
-
+	}
+	
 }

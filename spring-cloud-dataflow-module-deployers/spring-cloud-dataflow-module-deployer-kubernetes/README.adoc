@@ -1,26 +1,27 @@
-SPI implementation for deploying Spring Cloud Stream modules to [Kubernetes](http://http://kubernetes.io/).
+SPI implementation for deploying Spring Cloud Stream modules to http://http://kubernetes.io/[Kubernetes].
 
 ### Setup a Kubernetes Cluster
 
 If you don't have access to a Kubernetes Cluster, you can deploy one locally.
 This requires a local functional Docker installation and the usage of some
-nice scripts to setup [Kubernetes](https://github.com/olmoser/docker-compose-kubernetes).
+nice scripts to setup https://github.com/olmoser/docker-compose-kubernetes[Kubernetes].
 
 In a nutshell, do the following steps:
 ```
 $ git clone https://github.com/olmoser/docker-compose-kubernetes
 $ cd docker-compose-kubernetes
-$ docker-machine create --driver virtualbox sc-dataflow-dev 
-$ docker-machine start sc-dataflow-dev 
+$ docker-machine create --driver virtualbox sc-dataflow-dev
+$ docker-machine start sc-dataflow-dev
 $ eval "$(docker-machine env sc-dataflow-dev)"
 $ ./kube-up.sh
 ```
 
 Once the cluster is up, you need to add the Kubernetes cluster DNS server
-with the IP `10.0.0.10` to your local machine DNS configuration (Note:
-On Mac, you can create a network profile for easy switching.)
+with the IP `10.0.0.10` to your local machine DNS configuration. This way you
+are able to resolve all machine running in Kubernetes from your development machine
+(Note: On Mac, you can create a network profile for easy switching.)
 
-After installing a cluster, install the `kubectl` binary and ensure you have 
+After installing a cluster, install the `kubectl` binary and ensure you have
 proper access to the cluster.
 
 
@@ -41,8 +42,8 @@ proper access to the cluster.
    $ kubectl create -f src/main/kubernetes/redis-controller.yml
    $ kubectl create -f src/main/kubernetes/redis-service.yml
    ```
-   
-   Try to connect as well: 
+
+   Try to connect as well:
 
    You should now be able to resolve your Redis instance running in Kubernetes.
    ```
@@ -55,7 +56,7 @@ proper access to the cluster.
    $ redis.default.svc.cluster.local:6379> keys *
 		 (empty list or set)
    ```
-  
+
 1. Run integration tests (optional)
 
 	 ```
@@ -67,9 +68,9 @@ proper access to the cluster.
 
 	 ```
 	 $ cd ../.. # in case your ran the integration tests
-	 $ mvn clean package	 
+	 $ mvn clean package
 	 $ export SPRING_REDIS_HOST=redis.default.svc.cluster.local
-	 $ java -jar spring-cloud-dataflow-admin/target/spring-cloud-dataflow-admin-1.0.0.BUILD-SNAPSHOT.jar --spring.profiles.active=kubernetes 
+	 $ java -jar spring-cloud-dataflow-admin/target/spring-cloud-dataflow-admin-1.0.0.BUILD-SNAPSHOT.jar --spring.profiles.active=kubernetes
 	 ```
 
 1. Run Spring Cloud Data Flow Shell:
@@ -80,13 +81,13 @@ proper access to the cluster.
 
 
 1. Deploy your first stream to Kubernetes
-   
+
    ```
    dataflow:> stream create --name deployment1 --definition "http --server.port=9999 | log"  --deploy
    ```
-   
+
    You can now check the status:
-   
+
    ```
    dataflow:>stream list
    Stream Name  Stream Definition              Status
@@ -97,9 +98,9 @@ proper access to the cluster.
    The first deployment may take some time as Kubernetes needs to fetch the base image
    for running Spring Cloud Stream modules from DockerHub. Once the status is `deployed`
    you can test the stream.
-   
+
    Send a log message to the http endpoint that was created by the stream:
-   
+
    ```
    $ curl -v -XPOST -H"Content-Type: text/plain" http://deployment1-http.default.svc.cluster.local:9999/messages -d "foobar123"
    ```
@@ -108,13 +109,13 @@ proper access to the cluster.
    ```
 	 $ kubectl get pods -l scsm-label=log
 	 NAME                    READY     STATUS    RESTARTS   AGE
-	 deployment1-log-tacrf   1/1       Running   0          7m 
+	 deployment1-log-tacrf   1/1       Running   0          7m
 
 	 $ kubectl logs deployment1-log-tacrf
    ```
-   
+
    The last line should say "foobar123". This means the stream is working correctly.
-   
+
 	Also you check the status via Kubernetes `kubectl`:
 	 ```
 	 $ kubectl get service,rc,pods
@@ -125,7 +126,7 @@ proper access to the cluster.
 
 ### Configuration settings
 
-Internally the Kubernetes Deployer uses the excellent [Kubernetes Client API](https://github.com/fabric8io/kubernetes-client).
+Internally the Kubernetes Deployer uses the excellent https://github.com/fabric8io/kubernetes-client[Kubernetes Client API].
 
 If you have a working `kubectl` installation that points to an exsting Kubernetes cluster, the Spring Admin + the Kubernetes deployer will pick up the configuration automatically (in most cases). If not, see the configuration options below.
 
@@ -136,7 +137,7 @@ If you want to use your own base image you can set the following arguments when 
 --kubernetes.moduleLauncherImage=myorg/mycustom-module-launcher-image
 ```
 
-The default image is: [https://hub.docker.com/r/springcloud/stream-module-launcher/](springcloud/stream-module-launcher).
+The default image is: https://hub.docker.com/r/springcloud/stream-module-launcher/[springcloud/stream-module-launcher].
 
 
 ##### TL;DR
