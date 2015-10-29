@@ -38,8 +38,8 @@ public class PreBuiltDockerImageContainerFactory extends DefaultContainerFactory
 		List<String> cmdArgs = new LinkedList<String>();
 		for (Map.Entry<String, String> entry : args.entrySet()) {
 
-			cmdArgs.add(String.format("--%s=%s", bashEscape(entry.getKey()), 
-					bashEscape(entry.getValue())));
+			cmdArgs.add(String.format("--%s=%s", entry.getKey(), 
+					entry.getValue()));
 		}
 		return cmdArgs;	
 	}
